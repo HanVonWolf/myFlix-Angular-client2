@@ -1,14 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
-
-//You'll use this import to close the dialog on success
 import { MatDialogRef } from '@angular/material/dialog';
-
-//This import brings in the API calls we created in 6.2
 import { FetchApiDataService } from '../fetch-api-data.service';
-
-//This import is used to display notifications back to the user
 import { MatSnackBar } from '@angular/material/snack-bar';
-
 import { Router } from '@angular/router';
 
 @Component({
@@ -18,6 +11,8 @@ import { Router } from '@angular/router';
 })
 export class UserLoginFormComponent implements OnInit {
   @Input() loginData = { Username: '', Password: ''};
+
+  showPassword = false; // <-- ADD THIS PROPERTY to control password visibility
 
   constructor(
     public fetchApiData: FetchApiDataService,
@@ -29,29 +24,37 @@ export class UserLoginFormComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  /** 
+  /**
+   * Toggles the visibility of the password input.
+   * @memberof UserLoginFormComponent
+   */
+  toggleShowPassword(): void { // <-- ADD THIS METHOD
+    this.showPassword = !this.showPassword;
+  }
+
+  /**
    * This method will send the form inputs to the backend
-   * @param void 
-   * @returns user object 
+   * @param void
+   * @returns user object
    * @memberof UserLoginFormComponent
    * @see FetchApiDataService.userLogin()
    * @example loginUser()
    */
-
-  //This is the function responsible for sending the form inputs to the backend
   loginUser(): void {
     this.fetchApiData.userLogin(this.loginData).subscribe((result) => {
-      //Logic for a succesful user login goes here! (To be implemented)
-      localStorage.setItem('user', JSON.stringify(result.user));//result.user.Username
+      localStorage.setItem('user', JSON.stringify(result.user));
       localStorage.setItem('token', result.token);
       this.dialogRef.close();
-      this.snackBar.open('Logged in', 'OK', {
+      this.snackBar.open('Logged in successfully!', 'OK', { // Updated message for clarity
         duration: 2000
       });
       this.router.navigate(['movies']);
-    }, (result) => {
-      this.snackBar.open(result, 'OK', {
-        duration: 2000
+    }, (errorResponse) => { // Changed 'result' to 'errorResponse' for clarity
+      console.error('Login failed:', errorResponse); // It's good to log the actual error
+      // Assuming the errorResponse might be a string or an object with a message
+      const errorMessage = typeof errorResponse === 'string' ? errorResponse : (errorResponse?.error?.message || errorResponse?.message || 'Login failed. Please try again.');
+      this.snackBar.open(errorMessage, 'OK', {
+        duration: 3000 // Longer duration for errors might be helpful
       });
     });
   }
